@@ -2,21 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { fetchExamQuestions, submitExam } from "@/lib/api";
 
-const mockQuestions = [
-  { id: 1, question: "What is the time complexity of binary search?", options: ["O(n)", "O(log n)", "O(n²)", "O(1)"], correct: 1 },
-  { id: 2, question: "Which data structure uses FIFO?", options: ["Stack", "Queue", "Tree", "Graph"], correct: 1 },
-  { id: 3, question: "What does SQL stand for?", options: ["Structured Query Language", "Simple Query Language", "Standard Query Language", "Sequential Query Language"], correct: 0 },
-  { id: 4, question: "Which sorting algorithm has the best average case?", options: ["Bubble Sort", "Selection Sort", "Merge Sort", "Insertion Sort"], correct: 2 },
-  { id: 5, question: "What is a primary key?", options: ["A foreign reference", "A unique identifier", "An index", "A constraint"], correct: 1 },
-  { id: 6, question: "Which protocol is used for web browsing?", options: ["FTP", "SMTP", "HTTP", "TCP"], correct: 2 },
-  { id: 7, question: "What is polymorphism in OOP?", options: ["Data hiding", "Multiple forms", "Single inheritance", "Data binding"], correct: 1 },
-  { id: 8, question: "What is the purpose of an operating system?", options: ["Compile code", "Manage resources", "Browse internet", "Store files"], correct: 1 },
-  { id: 9, question: "Which layer handles routing in OSI model?", options: ["Transport", "Network", "Data Link", "Session"], correct: 1 },
-  { id: 10, question: "What is normalization in databases?", options: ["Adding redundancy", "Removing redundancy", "Creating indexes", "Deleting tables"], correct: 1 },
-];
-
-const EXAM_DURATION = 30 * 60;
+type Question = { id: number; question: string; options: string[] };
 
 const ExamPage = () => {
   const { id } = useParams();
@@ -24,32 +12,66 @@ const ExamPage = () => {
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
-  const [timeLeft, setTimeLeft] = useState(EXAM_DURATION);
+  const [timeLeft, setTimeLeft] = useState(30 * 60);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [title, setTitle] = useState("Exam");
+  const [result, setResult] = useState<{ score: number; percentage: number; total: number } | null>(null);
 
   useEffect(() => {
-    if (submitted) return;
+    if (!id) return;
+    const load = async () => {
+      try {
+        const data = await fetchExamQuestions(id);
+        setQuestions(data.questions);
+        setTitle(data.exam.title);
+        setTimeLeft(data.exam.durationMinutes * 60);
+      } catch {
+        navigate("/dashboard");
+      }
+    };
+    void load();
+  }, [id, navigate]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!id || !questions.length) return;
+    const payloadAnswers = questions.map((question, index) => ({
+      questionId: question.id,
+      selectedOption: answers[index] ?? null,
+    }));
+
+    const response = await submitExam(id, {
+      answers: payloadAnswers,
+      durationSeconds: payloadAnswers.length ? 0 : 0,
+    });
+
+    setResult(response);
+    setSubmitted(true);
+    setShowSubmitDialog(false);
+  }, [answers, id, questions]);
+
+  useEffect(() => {
+    if (submitted || !questions.length) return;
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timer); handleSubmit(); return 0; }
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          void handleSubmit();
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [submitted]);
-
-  const handleSubmit = useCallback(() => {
-    setSubmitted(true);
-    setShowSubmitDialog(false);
-  }, []);
+  }, [handleSubmit, questions.length, submitted]);
 
   const selectAnswer = (qIdx: number, optIdx: number) => {
-    setAnswers(prev => ({ ...prev, [qIdx]: optIdx }));
+    setAnswers((prev) => ({ ...prev, [qIdx]: optIdx }));
   };
 
   const toggleFlag = (qIdx: number) => {
-    setFlagged(prev => {
+    setFlagged((prev) => {
       const next = new Set(prev);
       next.has(qIdx) ? next.delete(qIdx) : next.add(qIdx);
       return next;
@@ -58,45 +80,35 @@ const ExamPage = () => {
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const score = mockQuestions.reduce((acc, q, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
-  const percentage = Math.round((score / mockQuestions.length) * 100);
+  const percentage = result?.percentage ?? 0;
+
+  if (!questions.length) {
+    return <div className="min-h-screen bg-muted flex items-center justify-center">Loading exam...</div>;
+  }
 
   if (submitted) {
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <div className="bg-card border border-border rounded-lg p-8 max-w-md w-full text-center">
-          <div className={`text-4xl font-bold mb-2 ${percentage >= 60 ? 'text-success' : 'text-destructive'}`}>
+          <div className={`text-4xl font-bold mb-2 ${percentage >= 60 ? "text-success" : "text-destructive"}`}>
             {percentage}%
           </div>
           <h1 className="text-xl font-bold text-foreground mb-1">Exam Completed!</h1>
-          <p className="text-sm text-muted-foreground mb-6">You scored {score} out of {mockQuestions.length} correctly.</p>
-
-          <div className="space-y-2 text-left mb-6">
-            {mockQuestions.map((q, i) => (
-              <div key={q.id} className={`p-3 rounded border text-sm ${answers[i] === q.correct ? 'border-success/40 bg-success/5' : 'border-destructive/40 bg-destructive/5'}`}>
-                <p className="font-medium text-foreground text-xs mb-1">Q{i + 1}: {q.question}</p>
-                <p className="text-xs text-muted-foreground">
-                  Your answer: <span className="font-medium">{q.options[answers[i]] ?? "Not answered"}</span>
-                  {answers[i] !== q.correct && <span className="text-success ml-2">✓ {q.options[q.correct]}</span>}
-                </p>
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-muted-foreground mb-6">You scored {result?.score ?? 0} out of {result?.total ?? questions.length} correctly.</p>
           <Button onClick={() => navigate("/dashboard")} className="w-full">Back to Dashboard</Button>
         </div>
       </div>
     );
   }
 
-  const q = mockQuestions[currentQ];
+  const q = questions[currentQ];
 
   return (
     <div className="min-h-screen bg-muted">
-      {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto flex items-center justify-between h-14 px-4">
-          <span className="font-semibold text-foreground">Exam #{id}</span>
-          <div className={`font-mono font-bold text-sm ${timeLeft < 300 ? 'text-destructive' : 'text-foreground'}`}>
+          <span className="font-semibold text-foreground">{title}</span>
+          <div className={`font-mono font-bold text-sm ${timeLeft < 300 ? "text-destructive" : "text-foreground"}`}>
             ⏱ {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
           </div>
           <Button variant="destructive" size="sm" onClick={() => setShowSubmitDialog(true)}>Submit</Button>
@@ -104,10 +116,9 @@ const ExamPage = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 max-w-3xl grid lg:grid-cols-[1fr_200px] gap-6">
-        {/* Question */}
         <div className="bg-card border border-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-muted-foreground">Question {currentQ + 1} of {mockQuestions.length}</span>
+            <span className="text-sm text-muted-foreground">Question {currentQ + 1} of {questions.length}</span>
             <button onClick={() => toggleFlag(currentQ)} className={`text-sm ${flagged.has(currentQ) ? "text-primary font-medium" : "text-muted-foreground"}`}>
               {flagged.has(currentQ) ? "🚩 Flagged" : "🏳 Flag"}
             </button>
@@ -130,20 +141,19 @@ const ExamPage = () => {
             ))}
           </div>
           <div className="flex justify-between mt-6">
-            <Button variant="outline" size="sm" disabled={currentQ === 0} onClick={() => setCurrentQ(p => p - 1)}>
+            <Button variant="outline" size="sm" disabled={currentQ === 0} onClick={() => setCurrentQ((p) => p - 1)}>
               ← Previous
             </Button>
-            <Button variant="outline" size="sm" disabled={currentQ === mockQuestions.length - 1} onClick={() => setCurrentQ(p => p + 1)}>
+            <Button variant="outline" size="sm" disabled={currentQ === questions.length - 1} onClick={() => setCurrentQ((p) => p + 1)}>
               Next →
             </Button>
           </div>
         </div>
 
-        {/* Question palette */}
         <div className="bg-card border border-border rounded-lg p-4 h-fit">
           <h3 className="text-sm font-semibold text-foreground mb-3">Questions</h3>
           <div className="grid grid-cols-5 gap-1.5">
-            {mockQuestions.map((_, i) => (
+            {questions.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentQ(i)}
@@ -161,11 +171,6 @@ const ExamPage = () => {
               </button>
             ))}
           </div>
-          <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-success/20" /> Answered</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-primary/20" /> Flagged</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-muted" /> Not visited</div>
-          </div>
         </div>
       </div>
 
@@ -174,13 +179,13 @@ const ExamPage = () => {
           <DialogHeader>
             <DialogTitle>Submit Exam?</DialogTitle>
             <DialogDescription>
-              You have answered {Object.keys(answers).length} of {mockQuestions.length} questions.
-              {Object.keys(answers).length < mockQuestions.length && " Some questions are unanswered."}
+              You have answered {Object.keys(answers).length} of {questions.length} questions.
+              {Object.keys(answers).length < questions.length && " Some questions are unanswered."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSubmitDialog(false)}>Cancel</Button>
-            <Button onClick={handleSubmit}>Confirm Submit</Button>
+            <Button onClick={() => void handleSubmit()}>Confirm Submit</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

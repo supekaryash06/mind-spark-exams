@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
+# Online Examination System (Browser/Server Architecture)
 
-## Project info
+This project now includes:
+- **React frontend** (existing UI kept intact)
+- **Node.js + Express backend API**
+- **MySQL database** for users, exams, questions, and submissions
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+It supports registration/login, fetching exams, randomized question sets, and secure submission scoring.
 
-## How can I edit this code?
+## Architecture
 
-There are several ways of editing your application.
+- Browser (React app) calls `/api/*`
+- Vite dev proxy forwards `/api` to the backend (`http://localhost:4000`)
+- Backend persists data in MySQL
 
-**Use Lovable**
+## Backend features aligned to your abstract
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- Effective and quick online exam flow (auto score computation)
+- Resource-saving browser/server model
+- Question-paper auto generation (randomized question selection via SQL `ORDER BY RAND()` within each exam)
+- Basic security controls:
+  - password hashing (`bcryptjs`)
+  - token-based authentication (`JWT`)
 
-Changes made via Lovable will be committed automatically to this repo.
+## Database setup (MySQL)
 
-**Use your preferred IDE**
+1. Create a `.env` file in project root:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```env
+API_PORT=4000
+JWT_SECRET=replace_this_secret
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=online_exam
 ```
 
-**Edit a file directly in GitHub**
+2. Initialize schema and seed data:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+mysql -h 127.0.0.1 -P 3306 -u root -p < server/sql/schema.sql
+```
 
-**Use GitHub Codespaces**
+## Run locally
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+npm install
+npm run dev:api      # backend on :4000
+npm run dev          # frontend on :8080
+```
 
-## What technologies are used for this project?
+Or run both:
 
-This project is built with:
+```bash
+npm run dev:full
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## API endpoints
 
-## How can I deploy this project?
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/exams` (auth required)
+- `GET /api/exams/:id/questions` (auth required)
+- `POST /api/exams/:id/submissions` (auth required)
+- `GET /api/health`
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Notes
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Frontend styling/components were not redesigned; only data wiring was added.
+- You can extend this backend with role-based admin features, audit logging, proctoring hooks, and encryption-at-rest for higher security.
