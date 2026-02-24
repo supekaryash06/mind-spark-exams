@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Clock, ChevronLeft, ChevronRight, Flag, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const mockQuestions = [
@@ -17,7 +16,7 @@ const mockQuestions = [
   { id: 10, question: "What is normalization in databases?", options: ["Adding redundancy", "Removing redundancy", "Creating indexes", "Deleting tables"], correct: 1 },
 ];
 
-const EXAM_DURATION = 30 * 60; // 30 minutes
+const EXAM_DURATION = 30 * 60;
 
 const ExamPage = () => {
   const { id } = useParams();
@@ -59,31 +58,31 @@ const ExamPage = () => {
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-
   const score = mockQuestions.reduce((acc, q, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
   const percentage = Math.round((score / mockQuestions.length) * 100);
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-card rounded-2xl p-8 md:p-12 shadow-card border border-border max-w-md w-full text-center">
-          <div className={`w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center text-3xl font-bold font-heading ${percentage >= 60 ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+        <div className="bg-card border border-border rounded-lg p-8 max-w-md w-full text-center">
+          <div className={`text-4xl font-bold mb-2 ${percentage >= 60 ? 'text-success' : 'text-destructive'}`}>
             {percentage}%
           </div>
-          <h1 className="font-heading text-2xl font-bold text-foreground mb-2">Exam Completed!</h1>
-          <p className="text-muted-foreground mb-6">You scored {score} out of {mockQuestions.length} questions correctly.</p>
-          <div className="space-y-3 text-sm text-left mb-8">
+          <h1 className="text-xl font-bold text-foreground mb-1">Exam Completed!</h1>
+          <p className="text-sm text-muted-foreground mb-6">You scored {score} out of {mockQuestions.length} correctly.</p>
+
+          <div className="space-y-2 text-left mb-6">
             {mockQuestions.map((q, i) => (
-              <div key={q.id} className={`p-3 rounded-lg border ${answers[i] === q.correct ? 'border-success/30 bg-success/5' : 'border-destructive/30 bg-destructive/5'}`}>
+              <div key={q.id} className={`p-3 rounded border text-sm ${answers[i] === q.correct ? 'border-success/40 bg-success/5' : 'border-destructive/40 bg-destructive/5'}`}>
                 <p className="font-medium text-foreground text-xs mb-1">Q{i + 1}: {q.question}</p>
-                <p className="text-xs">
+                <p className="text-xs text-muted-foreground">
                   Your answer: <span className="font-medium">{q.options[answers[i]] ?? "Not answered"}</span>
                   {answers[i] !== q.correct && <span className="text-success ml-2">✓ {q.options[q.correct]}</span>}
                 </p>
               </div>
             ))}
           </div>
-          <Button variant="hero" onClick={() => navigate("/dashboard")} className="w-full">Back to Dashboard</Button>
+          <Button onClick={() => navigate("/dashboard")} className="w-full">Back to Dashboard</Button>
         </div>
       </div>
     );
@@ -92,94 +91,88 @@ const ExamPage = () => {
   const q = mockQuestions[currentQ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+      <div className="border-b border-border bg-card">
         <div className="container mx-auto flex items-center justify-between h-14 px-4">
-          <span className="font-heading text-sm font-semibold text-foreground">Exam #{id}</span>
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-mono font-bold ${timeLeft < 300 ? 'bg-destructive/10 text-destructive' : 'bg-secondary/10 text-secondary'}`}>
-            <Clock className="h-4 w-4" />
-            {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+          <span className="font-semibold text-foreground">Exam #{id}</span>
+          <div className={`font-mono font-bold text-sm ${timeLeft < 300 ? 'text-destructive' : 'text-foreground'}`}>
+            ⏱ {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
           </div>
           <Button variant="destructive" size="sm" onClick={() => setShowSubmitDialog(true)}>Submit</Button>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 grid lg:grid-cols-[1fr_250px] gap-6">
+      <div className="container mx-auto px-4 py-6 max-w-3xl grid lg:grid-cols-[1fr_200px] gap-6">
         {/* Question */}
-        <div className="bg-card rounded-xl p-6 md:p-8 border border-border shadow-card">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-card border border-border rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-muted-foreground">Question {currentQ + 1} of {mockQuestions.length}</span>
-            <Button variant="ghost" size="sm" onClick={() => toggleFlag(currentQ)} className={flagged.has(currentQ) ? "text-accent" : ""}>
-              <Flag className="h-4 w-4 mr-1" /> {flagged.has(currentQ) ? "Flagged" : "Flag"}
-            </Button>
+            <button onClick={() => toggleFlag(currentQ)} className={`text-sm ${flagged.has(currentQ) ? "text-primary font-medium" : "text-muted-foreground"}`}>
+              {flagged.has(currentQ) ? "🚩 Flagged" : "🏳 Flag"}
+            </button>
           </div>
-          <h2 className="font-heading text-xl font-bold text-foreground mb-6">{q.question}</h2>
-          <div className="space-y-3">
+          <h2 className="text-lg font-bold text-foreground mb-5">{q.question}</h2>
+          <div className="space-y-2">
             {q.options.map((opt, oi) => (
               <button
                 key={oi}
                 onClick={() => selectAnswer(currentQ, oi)}
-                className={`w-full text-left p-4 rounded-lg border transition-all text-sm ${
+                className={`w-full text-left p-3 rounded border text-sm transition-colors ${
                   answers[currentQ] === oi
-                    ? "border-secondary bg-secondary/10 text-foreground font-medium"
-                    : "border-border bg-background hover:border-secondary/50 text-foreground"
+                    ? "border-primary bg-primary/10 text-foreground font-medium"
+                    : "border-border bg-background hover:border-primary/50 text-foreground"
                 }`}
               >
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border mr-3 text-xs font-semibold">
-                  {String.fromCharCode(65 + oi)}
-                </span>
+                <span className="inline-block w-6 font-semibold">{String.fromCharCode(65 + oi)}.</span>
                 {opt}
               </button>
             ))}
           </div>
-          <div className="flex justify-between mt-8">
-            <Button variant="outline" disabled={currentQ === 0} onClick={() => setCurrentQ(p => p - 1)}>
-              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" size="sm" disabled={currentQ === 0} onClick={() => setCurrentQ(p => p - 1)}>
+              ← Previous
             </Button>
-            <Button variant="outline" disabled={currentQ === mockQuestions.length - 1} onClick={() => setCurrentQ(p => p + 1)}>
-              Next <ChevronRight className="h-4 w-4 ml-1" />
+            <Button variant="outline" size="sm" disabled={currentQ === mockQuestions.length - 1} onClick={() => setCurrentQ(p => p + 1)}>
+              Next →
             </Button>
           </div>
         </div>
 
         {/* Question palette */}
-        <div className="bg-card rounded-xl p-5 border border-border shadow-card h-fit">
-          <h3 className="font-heading text-sm font-semibold text-foreground mb-4">Question Palette</h3>
-          <div className="grid grid-cols-5 gap-2">
+        <div className="bg-card border border-border rounded-lg p-4 h-fit">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Questions</h3>
+          <div className="grid grid-cols-5 gap-1.5">
             {mockQuestions.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentQ(i)}
-                className={`w-9 h-9 rounded-lg text-xs font-semibold transition-all ${
+                className={`w-8 h-8 rounded text-xs font-semibold ${
                   currentQ === i
-                    ? "gradient-hero text-primary-foreground"
+                    ? "bg-primary text-primary-foreground"
                     : answers[i] !== undefined
-                    ? "bg-success/20 text-success border border-success/30"
+                    ? "bg-success/20 text-success"
                     : flagged.has(i)
-                    ? "bg-accent/20 text-accent border border-accent/30"
-                    : "bg-muted text-muted-foreground border border-border"
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {i + 1}
               </button>
             ))}
           </div>
-          <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-success/20 border border-success/30" /> Answered</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-accent/20 border border-accent/30" /> Flagged</div>
-            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-muted border border-border" /> Not visited</div>
+          <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-success/20" /> Answered</div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-primary/20" /> Flagged</div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-muted" /> Not visited</div>
           </div>
         </div>
       </div>
 
-      {/* Submit dialog */}
       <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-accent" /> Submit Exam?
-            </DialogTitle>
+            <DialogTitle>Submit Exam?</DialogTitle>
             <DialogDescription>
               You have answered {Object.keys(answers).length} of {mockQuestions.length} questions.
               {Object.keys(answers).length < mockQuestions.length && " Some questions are unanswered."}
@@ -187,7 +180,7 @@ const ExamPage = () => {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowSubmitDialog(false)}>Cancel</Button>
-            <Button variant="hero" onClick={handleSubmit}>Confirm Submit</Button>
+            <Button onClick={handleSubmit}>Confirm Submit</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
