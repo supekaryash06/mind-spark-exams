@@ -11,9 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev:api": "node server/src/index.js",
+    "dev:api": "cd backend-java && mvn spring-boot:run",
     "dev:full": "concurrently \"npm run dev:api\" \"npm run dev\"",
-    "db:init": "mysql -h $DB_HOST -P ${DB_PORT:-3306} -u $DB_USER ${DB_PASSWORD:+-p$DB_PASSWORD} < server/sql/schema.sql"
+    "db:init": "mysql -h $DB_HOST -P ${DB_PORT:-3306} -u $DB_USER ${DB_PASSWORD:+-p$DB_PASSWORD} < backend-java/sql/schema.sql"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -65,13 +65,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
-    "zod": "^3.25.76",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.11.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
