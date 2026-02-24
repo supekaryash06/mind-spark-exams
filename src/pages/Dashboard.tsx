@@ -1,7 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Clock, FileText, BarChart3, LogOut, Play } from "lucide-react";
-import { motion } from "framer-motion";
 
 const mockExams = [
   { id: "1", title: "Data Structures & Algorithms", subject: "Computer Science", duration: 60, questions: 30, status: "available" },
@@ -14,105 +12,63 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <BookOpen className="h-7 w-7 text-secondary" />
-            <span className="font-heading text-xl font-bold text-foreground">ExamPortal</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10">
-              <span className="text-sm font-medium text-secondary">Student</span>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-              <LogOut className="h-4 w-4 mr-1" /> Logout
-            </Button>
-          </div>
+      <nav className="border-b border-border bg-card">
+        <div className="container mx-auto flex items-center justify-between h-14 px-4">
+          <Link to="/" className="text-lg font-bold text-primary">📝 ExamPortal</Link>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>Logout</Button>
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="font-heading text-3xl font-bold text-foreground mb-1">Welcome back, Student!</h1>
-          <p className="text-muted-foreground">Here are your upcoming and completed exams.</p>
-        </motion.div>
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <h1 className="text-2xl font-bold text-foreground mb-1">Welcome back, Student!</h1>
+        <p className="text-muted-foreground mb-8">Here are your upcoming and completed exams.</p>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {[
-            { label: "Available Exams", value: "2", icon: FileText, color: "text-secondary" },
-            { label: "Completed", value: "2", icon: BarChart3, color: "text-success" },
-            { label: "Avg Score", value: "78%", icon: BarChart3, color: "text-accent" },
-            { label: "Total Time", value: "3.5h", icon: Clock, color: "text-muted-foreground" },
-          ].map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-card rounded-xl p-5 border border-border shadow-card"
-            >
-              <s.icon className={`h-5 w-5 ${s.color} mb-2`} />
-              <p className="text-2xl font-bold text-foreground font-heading">{s.value}</p>
+            { label: "Available", value: "2" },
+            { label: "Completed", value: "2" },
+            { label: "Avg Score", value: "78%" },
+            { label: "Total Time", value: "3.5h" },
+          ].map((s) => (
+            <div key={s.label} className="bg-card border border-border rounded-lg p-4 text-center">
+              <p className="text-xl font-bold text-foreground">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Available Exams */}
-        <h2 className="font-heading text-xl font-bold text-foreground mb-4">Available Exams</h2>
-        <div className="grid md:grid-cols-2 gap-4 mb-10">
-          {mockExams.filter(e => e.status === "available").map((exam, i) => (
-            <motion.div
-              key={exam.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-card rounded-xl p-6 border border-border shadow-card hover:shadow-card-hover transition-shadow"
-            >
-              <h3 className="font-heading text-lg font-semibold text-foreground mb-1">{exam.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4">{exam.subject}</p>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-5">
-                <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {exam.duration} min</span>
-                <span className="flex items-center gap-1"><FileText className="h-4 w-4" /> {exam.questions} Qs</span>
+        <h2 className="text-lg font-bold text-foreground mb-3">Available Exams</h2>
+        <div className="space-y-3 mb-8">
+          {mockExams.filter(e => e.status === "available").map((exam) => (
+            <div key={exam.id} className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-foreground">{exam.title}</h3>
+                <p className="text-sm text-muted-foreground">{exam.duration} min • {exam.questions} questions</p>
               </div>
               <Link to={`/exam/${exam.id}`}>
-                <Button variant="hero" size="sm" className="w-full">
-                  <Play className="h-4 w-4 mr-1" /> Start Exam
-                </Button>
+                <Button size="sm">Start</Button>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        {/* Completed */}
-        <h2 className="font-heading text-xl font-bold text-foreground mb-4">Completed Exams</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          {mockExams.filter(e => e.status === "completed").map((exam, i) => (
-            <motion.div
-              key={exam.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-card rounded-xl p-6 border border-border shadow-card"
-            >
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-heading text-lg font-semibold text-foreground">{exam.title}</h3>
-                <span className={`text-sm font-bold ${(exam.score ?? 0) >= 80 ? 'text-success' : 'text-accent'}`}>
-                  {exam.score}%
-                </span>
+        {/* Completed Exams */}
+        <h2 className="text-lg font-bold text-foreground mb-3">Completed Exams</h2>
+        <div className="space-y-3">
+          {mockExams.filter(e => e.status === "completed").map((exam) => (
+            <div key={exam.id} className="bg-card border border-border rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-foreground">{exam.title}</h3>
+                <p className="text-sm text-muted-foreground">{exam.duration} min • {exam.questions} questions</p>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">{exam.subject}</p>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full ${(exam.score ?? 0) >= 80 ? 'bg-success' : 'bg-accent'}`}
-                  style={{ width: `${exam.score}%` }}
-                />
-              </div>
-            </motion.div>
+              <span className={`text-sm font-bold ${(exam.score ?? 0) >= 80 ? 'text-success' : 'text-primary'}`}>
+                {exam.score}%
+              </span>
+            </div>
           ))}
         </div>
       </div>
