@@ -3,16 +3,28 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { register } from "@/lib/api";
 
 const Register = () => {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+    setIsLoading(true);
+    try {
+      await register({ name, email, password });
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to register");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -41,7 +53,8 @@ const Register = () => {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required className="mt-1" />
             </div>
-            <Button type="submit" className="w-full">Create Account</Button>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Creating..." : "Create Account"}</Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-4">
